@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 cwd = os.getcwd()
-DIR_NAME = cwd + '/'+'GAN_model/'+'individual_plants_meshed'
+DIR_NAME = cwd + '/'+'individual_plants_meshed'
 HEADER_LENGTH = 13
 NUM_POLYGONS = 1728
 

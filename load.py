@@ -6,8 +6,10 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 
-DIR_NAME = 'individual_plants_meshed'
+cwd = os.getcwd()
+DIR_NAME = cwd + '/'+'individual_plants_meshed'
 HEADER_LENGTH = 13
+NUM_POLYGONS = 1728
 
 def read_obj(file):
     n_verts = 0
@@ -30,16 +32,19 @@ def read_obj(file):
     # store all faces
     # polygonOFWholeModel = np.zeros((n_faces, 3, 3))
     # store 1500 faces
-    polygonOFWholeModel = np.zeros((1536, 3, 3))
-    tempPolygon = np.zeros((3, 3))
+    # polygonOFWholeModel = np.zeros((1536, 3, 3))
+    # tempPolygon = np.zeros((3, 3))
+
+    polygonOFWholeModel = np.zeros((NUM_POLYGONS,9))
+    tempPolygon = np.zeros((9))
     for i_face in range(n_faces):
-        if i_face < 1536:
+        if i_face < NUM_POLYGONS:
             faces.append([int(s) for s in file.readline().strip().split(' ')])
 
             for i in range(3):
             # tempPolygon[i] = verts[faces[i_face][i]]
             # get the position information
-                tempPolygon[i] = verts[faces[i_face][i]][:3]
+                tempPolygon[i*3:(i+1)*3] = verts[faces[i_face][i]][:3]
             polygonOFWholeModel[i_face] = tempPolygon
         else:
             break

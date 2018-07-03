@@ -1,79 +1,54 @@
 from plyfile import PlyData, PlyElement
 import os
 import os.path
-import scipy.io as io
-import re
 import numpy as np
-import matplotlib.pyplot as plt
 
-cwd = os.getcwd()
-DIR_NAME = cwd + '/'+'individual_plants_meshed'
-HEADER_LENGTH = 13
-NUM_POLYGONS = 1728
+
+
+DIR_NAME = '/individual_plants_meshed'
+subSamping2 = 'finalMesh/'
+NUM_POLYGONS = 576
 
 def read_obj(file):
-    n_verts = 0
-    n_faces = 0
-    file = open(file,'r')
-    for i in range(HEADER_LENGTH):
-        s = file.readline().strip().split(' ')
-        if i== 3:
-            n_verts = int(s[2])
-        if i== 10:
-            n_faces = int(s[2])
-    verts = []
-    for i_vert in range(n_verts):
-        verts.append([float(s) for s in file.readline().strip().split(' ')])
-    faces = []
-
-    # polygonOFWholeModel = np.zeros((n_faces,3,6))
-    # tempPolygon = np.zeros((3,6))
-
-    # store all faces
-    # polygonOFWholeModel = np.zeros((n_faces, 3, 3))
-    # store 1500 faces
-    # polygonOFWholeModel = np.zeros((1536, 3, 3))
-    # tempPolygon = np.zeros((3, 3))
-
+    plydata = PlyData.read(file)
+    n_verts = plydata['vertex'].count
+    n_faces = plydata['face'].count
     polygonOFWholeModel = np.zeros((NUM_POLYGONS,9))
-    tempPolygon = np.zeros((9))
+    tempPolygon = np.zeros(9)
     for i_face in range(n_faces):
         if i_face < NUM_POLYGONS:
-            faces.append([int(s) for s in file.readline().strip().split(' ')])
-
             for i in range(3):
-            # tempPolygon[i] = verts[faces[i_face][i]]
+                vertex_index = plydata['face']['vertex_indices'][i_face][i]
             # get the position information
-                tempPolygon[i*3:(i+1)*3] = verts[faces[i_face][i]][:3]
+                tempPolygon[i * 3 + 0:i * 3 + 1] = plydata['vertex']['x'][vertex_index]
+                tempPolygon[i * 3 + 1:i * 3 + 2] = plydata['vertex']['y'][vertex_index]
+                tempPolygon[i * 3 + 2:i * 3 + 3] = plydata['vertex']['z'][vertex_index]
             polygonOFWholeModel[i_face] = tempPolygon
         else:
             break
-    file.close()
 
     return polygonOFWholeModel
 
 def loadData(obj_ratio=1.0):
-
-    # objPath += '/train1/' if train else '/test/'
-    fileDir = os.listdir(DIR_NAME)
+    fileDir = os.listdir(subSamping2)
     fileList =[]
     for fileName in fileDir:
         # get the vegetation directory name
         if 'vegetation' in fileName:
-            fileList.append(DIR_NAME+'/'+fileName+'/mesh.obj')
+            fileList.append(subSamping2 + fileName)
     fileList = fileList[0:int(obj_ratio * len(fileList))]
-    numberOfModel = len(fileList)
-    # faceBatch = np.asarray([read_off(objPath + f) for f in fileList],dtype=np.bool)
     polygons = []
+    count = 0
     for f in fileList:
+        print('------load model------{}-----{}----------------'.format(count,f))
         polygons.append(read_obj(f))
-
+        count+=1
+    np.save('polygonData', np.array(polygons))
     return np.array(polygons)
 
 if __name__ == '__main__':
     polygonBatch = loadData(1)
     # print(polygonBatch.shape)
-    # print(polygonBatch[1].shape)
     # print(polygonBatch[2].shape)
     print('data has finished')
     # plydata = {}

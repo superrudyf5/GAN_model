@@ -1,0 +1,34 @@
+<!DOCTYPE FilterScript>
+<FilterScript>
+ <filter name="Conditional Vertex Selection">
+  <Param tooltip="type a boolean function that will be evaluated in order to select a subset of vertices&lt;br>example: (y > 0) and (ny > 0)" type="RichString" value="nx == 0" name="condSelect" description="boolean function"/>
+ </filter>
+ <filter name="Delete Selected Vertices"/>
+ <xmlfilter name="Screened Poisson Surface Reconstruction">
+  <xmlparam value="0" name="cgDepth"/>
+  <xmlparam value="false" name="confidence"/>
+  <xmlparam value="9" name="depth"/>
+  <xmlparam value="5" name="fullDepth"/>
+  <xmlparam value="8" name="iters"/>
+  <xmlparam value="4" name="pointWeight"/>
+  <xmlparam value="false" name="preClean"/>
+  <xmlparam value="1.5" name="samplesPerNode"/>
+  <xmlparam value="1.1" name="scale"/>
+  <xmlparam value="false" name="visibleLayer"/>
+ </xmlfilter>
+ <filter name="Delete Current Mesh"/>
+ <filter name="Simplification: Quadric Edge Collapse Decimation">
+  <Param tooltip="The desired final number of faces." type="RichInt" value="70000" name="TargetFaceNum" description="Target number of faces"/>
+  <Param tooltip="If non zero, this parameter specifies the desired final size of the mesh as a percentage of the initial size." type="RichFloat" value="0" name="TargetPerc" description="Percentage reduction (0..1)"/>
+  <Param tooltip="Quality threshold for penalizing bad shaped faces.&lt;br>The value is in the range [0..1]&#xa; 0 accept any kind of face (no penalties),&#xa; 0.5  penalize faces with quality &lt; 0.5, proportionally to their shape&#xa;" type="RichFloat" value="0.3" name="QualityThr" description="Quality threshold"/>
+  <Param tooltip="The simplification process tries to do not affect mesh boundaries during simplification" type="RichBool" value="false" name="PreserveBoundary" description="Preserve Boundary of the mesh"/>
+  <Param tooltip="The importance of the boundary during simplification. Default (1.0) means that the boundary has the same importance of the rest. Values greater than 1.0 raise boundary importance and has the effect of removing less vertices on the border. Admitted range of values (0,+inf). " type="RichFloat" value="1" name="BoundaryWeight" description="Boundary Preserving Weight"/>
+  <Param tooltip="Try to avoid face flipping effects and try to preserve the original orientation of the surface" type="RichBool" value="false" name="PreserveNormal" description="Preserve Normal"/>
+  <Param tooltip="Avoid all the collapses that should cause a topology change in the mesh (like closing holes, squeezing handles, etc). If checked the genus of the mesh should stay unchanged." type="RichBool" value="false" name="PreserveTopology" description="Preserve Topology"/>
+  <Param tooltip="Each collapsed vertex is placed in the position minimizing the quadric error.&#xa; It can fail (creating bad spikes) in case of very flat areas. &#xa;If disabled edges are collapsed onto one of the two original vertices and the final mesh is composed by a subset of the original vertices. " type="RichBool" value="true" name="OptimalPlacement" description="Optimal position of simplified vertices"/>
+  <Param tooltip="Add additional simplification constraints that improves the quality of the simplification of the planar portion of the mesh." type="RichBool" value="false" name="PlanarQuadric" description="Planar Simplification"/>
+  <Param tooltip="Use the Per-Vertex quality as a weighting factor for the simplification. The weight is used as a error amplification value, so a vertex with a high quality value will not be simplified and a portion of the mesh with low quality values will be aggressively simplified." type="RichBool" value="false" name="QualityWeight" description="Weighted Simplification"/>
+  <Param tooltip="After the simplification an additional set of steps is performed to clean the mesh (unreferenced vertices, bad faces, etc)" type="RichBool" value="true" name="AutoClean" description="Post-simplification cleaning"/>
+  <Param tooltip="The simplification is applied only to the selected set of faces.&#xa; Take care of the target number of faces!" type="RichBool" value="false" name="Selected" description="Simplify only selected faces"/>
+ </filter>
+</FilterScript>

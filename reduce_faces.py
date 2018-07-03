@@ -15,7 +15,7 @@ import subprocess
 filter_script_mlx = """<!DOCTYPE FilterScript>
 <FilterScript>
  <filter name="Quadric Edge Collapse Decimation">
-  <Param type="RichInt" value="1448" name="TargetFaceNum"/>
+  <Param type="RichInt" value="1500" name="TargetFaceNum"/>
   <Param type="RichFloat" value="0.9" name="TargetPerc"/>
   <Param type="RichFloat" value="0.3" name="QualityThr"/>
   <Param type="RichBool" value="false" name="PreserveBoundary"/>
@@ -32,8 +32,13 @@ filter_script_mlx = """<!DOCTYPE FilterScript>
 
 """
 
+meshlabserver_path = '/Applications/meshlab.app/Contents/MacOS/'
+os.environ['PATH'] = meshlabserver_path + os.pathsep + os.environ['PATH']
 
 cwd = os.getcwd()
+DIR_NAME = cwd + '/'+'sub_individual_plants_meshed'
+OUTPUT_DIR = 'meshed/'
+
 
 def create_tmp_filter_file(filename='filter_file_tmp.mlx'):
     with open(cwd + '\\tmp\\' + filename, 'w') as f:
@@ -52,41 +57,41 @@ def reduce_faces(in_file, out_file,
     print ("Going to execute: " + command)
     output = subprocess.check_output(command, shell=True)
     last_line = output.splitlines()[-1]
-    print
-    print  ("Done:")
+    print ("Done:")
     print (in_file + " > " + out_file + ": " + last_line)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print("Usage:")
-        print(sys.argv[0] + " /path/to/input_mesh num_iterations")
-        print("For example, reduce 10 times:")
-        print(sys.argv[0] + " /home/myuser/mymesh.dae 10")
-        exit(0)
-
-    in_mesh = sys.argv[1]
-    filename = in_mesh.split('\\')[-1]
-    num_iterations = int(sys.argv[2])
-
-    folder_name = filename.replace('.', '_')
-    tmp_folder_name = cwd + '\\tmp\\' + folder_name + '_meshes\\'
-
-    print("Input mesh: " + in_mesh + " (filename: " + filename + ")")
-    print("Num iterations: " + str(num_iterations))
-    print("Output folder: " + tmp_folder_name)
-    try:
-        os.mkdir(tmp_folder_name)
-    except OSError as e:
-        print(sys.stderr, "Exception creating folder for meshes: " + str(e))
-    for it in range(num_iterations):
-        if num_iterations == 1:
-            out_mesh = tmp_folder_name + folder_name + "_it" + str(it) + ".obj"
+    fileDir = os.listdir(DIR_NAME)
+    num_iterations = 0
+    for fileName in fileDir:
+        if 'vegetation' in fileName:
+            in_mesh = DIR_NAME+'/'+fileName+'/mesh.obj'
+            tmp_folder_name = cwd + '\\tmp\\' + str(num_iterations) + '_meshes\\'
+            print("Input mesh: " + fileName + " (filename: " + str(num_iterations) + ")")
+            print("Num iterations: " + str(num_iterations))
+            print("Output folder: " + tmp_folder_name)
+            try:
+                os.mkdir(tmp_folder_name)
+            except OSError as e:
+                print(sys.stderr, "Exception creating folder for meshes: " + str(e))
+            out_mesh = tmp_folder_name + "_it" + str(num_iterations) + ".obj"
             reduce_faces(in_mesh, out_mesh)
-        else:
-            out_mesh = tmp_folder_name + folder_name + "_it" + str(it) + ".obj"
-            reduce_faces(last_out_mesh, out_mesh)
-        last_out_mesh = out_mesh
+        num_iterations += 1
 
-    print()
+    # folder_name = filename.replace('.', '_')
+    # tmp_folder_name = cwd + '\\tmp\\' + folder_name + '_meshes\\'
+
+    #
+    #
+    # for it in range(num_iterations):
+    #     # if num_iterations == 1:
+    #     out_mesh = tmp_folder_name+ "_it" + str(it) + ".obj"
+    #     reduce_faces(in_mesh, out_mesh)
+    #     # else:
+    #     #     out_mesh = tmp_folder_name + "_it" + str(it) + ".obj"
+    #     #     reduce_faces(last_out_mesh, out_mesh)
+    #     # last_out_mesh = out_mesh
+    #
+    # print()
     print("Done reducing, find the files at: " + tmp_folder_name)

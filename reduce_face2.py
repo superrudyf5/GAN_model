@@ -3,7 +3,7 @@ import os
 
 cwd = os.getcwd()
 DIR_IN = cwd + '/' + 'sub_individual_plants_meshed'
-DIR_OUT = cwd + '/'+'output_mesh'
+DIR_OUT = cwd + '/'+'subsamping_mesh'
 
 NUMBER_OF_FACES = 2000
 

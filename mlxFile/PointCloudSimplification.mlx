@@ -1,0 +1,12 @@
+<!DOCTYPE FilterScript>
+<FilterScript>
+ <filter name="Point Cloud Simplification">
+  <Param tooltip="The desired number of samples. The ray of the disk is calculated according to the sampling density." type="RichInt" value="1500" name="SampleNum" description="Number of samples"/>
+  <Param tooltip="If not zero this parameter override the previous parameter to allow exact radius specification" min="0" max="2.16233" type="RichAbsPerc" value="0" name="Radius" description="Explicit Radius"/>
+  <Param tooltip="If true it will use a simple heuristic for choosing the samples. At a small cost (it can slow a bit the process) it usually improve the maximality of the generated sampling. " type="RichBool" value="true" name="BestSampleFlag" description="Best Sample Heuristic"/>
+  <Param tooltip="Used only if the Best Sample Flag is true. It control the number of attempt that it makes to get the best sample. It is reasonable that it is smaller than the Montecarlo oversampling factor." type="RichInt" value="10" name="BestSamplePool" description="Best Sample Pool Size"/>
+  <Param tooltip="If requested it will try to do a dicotomic search for the best poisson disk radius that will generate the requested number of samples with a tolerance of the 0.5%. Obviously it takes much longer." type="RichBool" value="false" name="ExactNumFlag" description="Exact number of samples"/>
+ </filter>
+</FilterScript>
+
+

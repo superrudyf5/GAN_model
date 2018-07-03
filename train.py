@@ -13,7 +13,7 @@ beta  = 0.5
 y_height = 432
 d_thresh   = 0.8
 polygonBatch = loadData(1)
-model_directory = './models/'
+model_directory = './mlxFile/'
 
 weights,biases = {},{}
 

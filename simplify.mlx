@@ -1,0 +1,15 @@
+<!DOCTYPE FilterScript>
+<FilterScript>
+  <filter name="Quadric Edge Collapse Decimation (with texture)">
+    <Param name="TargetFaceNum" value="2000" description="Target number of faces" type="RichInt" />
+    <Param name="TargetPerc" value="0.0" description="Percentage reduction (0..1)" type="RichFloat" />
+    <Param name="QualityThr" value="0.3" description="Quality threshold" type="RichFloat" />
+    <Param name="PreserveBoundary" value="false" description="Preserve Boundary of the mesh" type="RichBool" />
+    <Param name="BoundaryWeight" value="1.0" description="Boundary Preserving Weight" type="RichFloat" />
+    <Param name="OptimalPlacement" value="true" description="Optimal position of simplified vertices" type="RichBool" />
+    <Param name="PreserveNormal" value="false" description="Preserve Normal" type="RichBool" />
+    <Param name="PlanarQuadric" value="false" description="Planar Simplification" type="RichBool" />
+    <Param name="Selected" value="false" description="Simplify only selected faces" type="RichBool" />
+    <Param name="Extratcoordw" value="1.0" description="Texture Weight" type="RichFloat" />
+  </filter>
+</FilterScript>

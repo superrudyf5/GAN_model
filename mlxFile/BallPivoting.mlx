@@ -1,0 +1,17 @@
+<!DOCTYPE FilterScript>
+<FilterScript>
+ <filter name="Smooths normals on a point sets">
+  <Param tooltip="The number of neighbors used to smooth normals." type="RichInt" value="10" name="K" description="Number of neigbors"/>
+  <Param tooltip="If selected, the neighbour normals are waighted according to their distance" type="RichBool" value="false" name="useDist" description="Weight using neighbour distance"/>
+ </filter>
+ <filter name="Smooths normals on a point sets">
+  <Param tooltip="The number of neighbors used to smooth normals." type="RichInt" value="10" name="K" description="Number of neigbors"/>
+  <Param tooltip="If selected, the neighbour normals are waighted according to their distance" type="RichBool" value="false" name="useDist" description="Weight using neighbour distance"/>
+ </filter>
+ <filter name="Surface Reconstruction: Ball Pivoting">
+  <Param tooltip="The radius of the ball pivoting (rolling) over the set of points. Gaps that are larger than the ball radius will not be filled; similarly the small pits that are smaller than the ball radius will be filled." min="0" max="0.140603" type="RichAbsPerc" value="0" name="BallRadius" description="Pivoting Ball radius (0 autoguess)"/>
+  <Param tooltip="To avoid the creation of too small triangles, if a vertex is found too close to a previous one, it is clustered/merged with it." type="RichFloat" value="20" name="Clustering" description="Clustering radius (% of ball radius)"/>
+  <Param tooltip="If we encounter a crease angle that is too large we should stop the ball rolling" type="RichFloat" value="90" name="CreaseThr" description="Angle Threshold (degrees)"/>
+  <Param tooltip="if true all the initial faces of the mesh are deleted and the whole surface is rebuilt from scratch, other wise the current faces are used as a starting point. Useful if you run multiple times the algorithm with an incrasing ball radius." type="RichBool" value="false" name="DeleteFaces" description="Delete intial set of faces"/>
+ </filter>
+</FilterScript>

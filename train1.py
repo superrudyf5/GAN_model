@@ -3,7 +3,7 @@ from load import loadData
 import numpy as np
 import os
 
-n_epochs = 100
+n_epochs = 1
 learning_rate = 0.0002
 batch_size = 27
 z_size = 200
@@ -11,9 +11,14 @@ g_lr  = 0.008
 d_lr  = 0.000001
 beta  = 0.5
 d_thresh   = 0.8
-polygonBatch = loadData(1)
-NUM_POLYGONS = 1728
-model_directory = './models/'
+if os.path.exists('polygonData.npy'):
+    polygonBatch = np.load('polygonData.npy')
+else:
+    polygonBatch = loadData(1)
+
+NUM_POLYGONS = 576
+model_directory = './mlxFile/'
+train_sample_directory = './train_sample/'
 
 weights,biases = {},{}
 
@@ -44,7 +49,7 @@ def generator(z,batch_size = batch_size,phase_train=True,reuse = False):
         g_4 = tf.contrib.layers.batch_norm(g_4, is_training=phase_train)
         g_4 = tf.nn.relu(g_4)
 
-        g_5 = tf.nn.conv2d_transpose(g_4, weights['wg5'], (batch_size, 1728, 9, 1), strides=[1,3,1,1], padding="SAME")
+        g_5 = tf.nn.conv2d_transpose(g_4, weights['wg5'], (batch_size, 576, 9, 1), strides=[1,1,1,1], padding="SAME")
         g_5 = tf.nn.bias_add(g_5, biases['bg5'])
         g_5 = tf.nn.sigmoid(g_5)
     print(g_1, 'g1')
@@ -209,9 +214,9 @@ def trainGAN():
                 # output generated chairs
                 if epoch % 500 == 10:
                     g_chairs = sess.run(net_g_test, feed_dict={z_vector: z_sample})
-                    # if not os.path.exists(train_sample_directory):
-                    #     os.makedirs(train_sample_directory)
-                    # g_chairs.dump(train_sample_directory + '/' + str(epoch))
+                    if not os.path.exists(train_sample_directory):
+                        os.makedirs(train_sample_directory)
+                    g_chairs.dump(train_sample_directory + '/' + str(epoch))
 
                 if epoch % 500 == 10:
                     if not os.path.exists(model_directory):

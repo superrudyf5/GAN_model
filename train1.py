@@ -152,10 +152,7 @@ def trainGAN():
     n_p_x = tf.reduce_sum(tf.cast(d_output_x > 0.5, tf.int32))
     n_p_z = tf.reduce_sum(tf.cast(d_output_z <= 0.5, tf.int32))
     d_acc = tf.divide(n_p_x + n_p_z, 2 * batch_size)
-
-    print(d_output_x.shape)
-    print(d_output_z.shape)
-    print('-----------------')
+    print('npz:{}---npx:{}---d_output_x:{}--d_output_z:{}--'.format(n_p_z,n_p_x,d_output_x,d_output_z))
 
     # Compute the discriminator and generator loss
     d_loss = -tf.reduce_mean(tf.log(d_output_x) + tf.log(1 - d_output_z))
@@ -212,13 +209,15 @@ def trainGAN():
                       generator_loss, "d_acc: ", d_accuracy)
 
                 # output generated chairs
-                if epoch % 500 == 10:
+                #if epoch % 500 == 10:
+                if epoch ==0:
                     g_chairs = sess.run(net_g_test, feed_dict={z_vector: z_sample})
                     if not os.path.exists(train_sample_directory):
                         os.makedirs(train_sample_directory)
                     g_chairs.dump(train_sample_directory + '/' + str(epoch))
 
-                if epoch % 500 == 10:
+                #if epoch % 500 == 10:
+                if epoch==0:
                     if not os.path.exists(model_directory):
                         os.makedirs(model_directory)
                     saver.save(sess, save_path=model_directory + '/' + str(epoch) + '.cptk')

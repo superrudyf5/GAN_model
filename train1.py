@@ -11,8 +11,8 @@ g_lr  = 0.008
 d_lr  = 0.000001
 beta  = 0.5
 d_thresh   = 0.8
-if os.path.exists('polygonData.npy'):
-    polygonBatch = np.load('polygonData.npy')
+if os.path.exists('polygonTestData.npy'):
+    polygonBatch = np.load('polygonTestData.npy')
 else:
     polygonBatch = loadData(1)
 
@@ -152,7 +152,7 @@ def trainGAN():
     n_p_x = tf.reduce_sum(tf.cast(d_output_x > 0.5, tf.int32))
     n_p_z = tf.reduce_sum(tf.cast(d_output_z <= 0.5, tf.int32))
     d_acc = tf.divide(n_p_x + n_p_z, 2 * batch_size)
-    print('npz:{}---npx:{}---d_output_x:{}--d_output_z:{}--'.format(n_p_z,n_p_x,d_output_x,d_output_z))
+
 
     # Compute the discriminator and generator loss
     d_loss = -tf.reduce_mean(tf.log(d_output_x) + tf.log(1 - d_output_z))
@@ -185,7 +185,7 @@ def trainGAN():
                     range(batch_size, len(polygonBatch), batch_size)):
 
                 next_polygon = polygonBatch[start:end].reshape(batch_size,NUM_POLYGONS,9,1)
-
+                print('summary npz:{}---summary npx:{}---summary d_output_x:{}--summary d_output_z:{}--'.format(summary_n_p_x, summary_n_p_z,summary_d_x_hist, summary_d_z_hist))
                 d_summary_merge = tf.summary.merge([summary_d_loss,
                                                     summary_d_x_hist,
                                                     summary_d_z_hist,
@@ -197,7 +197,7 @@ def trainGAN():
                                                          feed_dict={z_vector: z_sample, x_vector: next_polygon})
                 summary_g, generator_loss = sess.run([summary_g_loss, g_loss], feed_dict={z_vector: z_sample})
                 d_accuracy, n_x, n_z = sess.run([d_acc, n_p_x, n_p_z], feed_dict={z_vector: z_sample, x_vector: next_polygon})
-                print(n_x, n_z)
+
 
                 if d_accuracy < d_thresh:
                     sess.run([optimizer_op_d], feed_dict={z_vector: z_sample, x_vector: next_polygon})

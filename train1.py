@@ -27,29 +27,29 @@ def generator(z,batch_size = batch_size,phase_train=True,reuse = False):
     strides = [1,4,1,1]
     with tf.variable_scope("gen", reuse=reuse):
         z = tf.reshape(z, (batch_size, 1, 1, z_size))
-        g_1 = tf.nn.conv2d_transpose(z, weights['wg1'], (batch_size, 9, 9, 512), strides=[1, 1, 1, 1],
+        g_1 = tf.nn.conv2d_transpose(z, weights['wg1'], (batch_size, 3, 3, 512), strides=[1, 3, 3, 1],
                                      padding="VALID")
         g_1 = tf.nn.bias_add(g_1, biases['bg1'])
         g_1 = tf.contrib.layers.batch_norm(g_1, is_training=phase_train)
         g_1 = tf.nn.relu(g_1)
 
-        g_2 = tf.nn.conv2d_transpose(g_1, weights['wg2'], (batch_size, 36, 9, 256), strides=strides, padding="SAME")
+        g_2 = tf.nn.conv2d_transpose(g_1, weights['wg2'], (batch_size, 9, 9, 256), strides=[1, 3, 3, 1], padding="SAME")
         g_2 = tf.nn.bias_add(g_2, biases['bg2'])
         g_2 = tf.contrib.layers.batch_norm(g_2, is_training=phase_train)
         g_2 = tf.nn.relu(g_2)
 
-        g_3 = tf.nn.conv2d_transpose(g_2, weights['wg3'], (batch_size, 144, 9, 128), strides=strides,
+        g_3 = tf.nn.conv2d_transpose(g_2, weights['wg3'], (batch_size, 36, 9, 128), strides=strides,
                                      padding="SAME")
         g_3 = tf.nn.bias_add(g_3, biases['bg3'])
         g_3 = tf.contrib.layers.batch_norm(g_3, is_training=phase_train)
         g_3 = tf.nn.relu(g_3)
 
-        g_4 = tf.nn.conv2d_transpose(g_3, weights['wg4'], (batch_size, 576, 9, 64), strides=strides, padding="SAME")
+        g_4 = tf.nn.conv2d_transpose(g_3, weights['wg4'], (batch_size, 144, 9, 64), strides=strides, padding="SAME")
         g_4 = tf.nn.bias_add(g_4, biases['bg4'])
         g_4 = tf.contrib.layers.batch_norm(g_4, is_training=phase_train)
         g_4 = tf.nn.relu(g_4)
 
-        g_5 = tf.nn.conv2d_transpose(g_4, weights['wg5'], (batch_size, 576, 9, 1), strides=[1,1,1,1], padding="SAME")
+        g_5 = tf.nn.conv2d_transpose(g_4, weights['wg5'], (batch_size, 576, 9, 1), strides=[1,4,1,1], padding="SAME")
         g_5 = tf.nn.bias_add(g_5, biases['bg5'])
         g_5 = tf.nn.sigmoid(g_5)
     print(g_1, 'g1')
@@ -101,17 +101,17 @@ def initialiseWeights():
     global weights
     xavier_init = tf.contrib.layers.xavier_initializer()
 
-    weights['wg1'] = tf.get_variable("wg1", shape=[9, 9,  512, 200], initializer=xavier_init)
-    weights['wg2'] = tf.get_variable("wg2", shape=[9, 9,  256, 512], initializer=xavier_init)
-    weights['wg3'] = tf.get_variable("wg3", shape=[9, 9,  128, 256], initializer=xavier_init)
-    weights['wg4'] = tf.get_variable("wg4", shape=[9, 9,  64, 128], initializer=xavier_init)
-    weights['wg5'] = tf.get_variable("wg5", shape=[9, 9,   1, 64], initializer=xavier_init)
+    weights['wg1'] = tf.get_variable("wg1", shape=[3, 3,  512, 200], initializer=xavier_init)
+    weights['wg2'] = tf.get_variable("wg2", shape=[3, 3,  256, 512], initializer=xavier_init)
+    weights['wg3'] = tf.get_variable("wg3", shape=[3, 3,  128, 256], initializer=xavier_init)
+    weights['wg4'] = tf.get_variable("wg4", shape=[3, 3,  64, 128], initializer=xavier_init)
+    weights['wg5'] = tf.get_variable("wg5", shape=[3, 3,   1, 64], initializer=xavier_init)
 
-    weights['wd1'] = tf.get_variable("wd1", shape=[9, 9, 1, 64], initializer=xavier_init)
-    weights['wd2'] = tf.get_variable("wd2", shape=[9, 9, 64, 128], initializer=xavier_init)
-    weights['wd3'] = tf.get_variable("wd3", shape=[9, 9, 128, 256], initializer=xavier_init)
-    weights['wd4'] = tf.get_variable("wd4", shape=[9, 9, 256, 512], initializer=xavier_init)
-    weights['wd5'] = tf.get_variable("wd5", shape=[9, 9, 512, 1], initializer=xavier_init)
+    weights['wd1'] = tf.get_variable("wd1", shape=[3, 3, 1, 64], initializer=xavier_init)
+    weights['wd2'] = tf.get_variable("wd2", shape=[3, 3, 64, 128], initializer=xavier_init)
+    weights['wd3'] = tf.get_variable("wd3", shape=[3, 3, 128, 256], initializer=xavier_init)
+    weights['wd4'] = tf.get_variable("wd4", shape=[3, 3, 256, 512], initializer=xavier_init)
+    weights['wd5'] = tf.get_variable("wd5", shape=[3, 3, 512, 1], initializer=xavier_init)
 
     return weights
 

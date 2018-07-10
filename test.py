@@ -23,8 +23,13 @@ os.environ['PATH'] = meshlabserver_path + os.pathsep + os.environ['PATH']
 #
 # np.save('aaaaaaaaaaaaa.npy',np.array(polgons))
 #
-b = np.load('polygonData.npy')
-print(b.shape)
+b = np.load('polygonTestData.npy')
+a = b.reshape(1326,576,9)
+
+print(a.shape)
+
+
+
 # cwd = os.getcwd()
 # originalDir = cwd + '/' + 'individual-plants/vegetation_0_2018-06-01_12-45-40/cloud.ply'
 # subSamping2 = cwd + '/' + 'individual_plants_sub1/'

@@ -1,9 +1,24 @@
 import numpy as np
 from tempfile import TemporaryFile
 import meshlabxml as mlx
-import os
-meshlabserver_path = '/Applications/meshlab.app/Contents/MacOS/'
-os.environ['PATH'] = meshlabserver_path + os.pathsep + os.environ['PATH']
+from utils import getMeshFromMatrix
+directory = 'generateMesh/'
+matrix = np.load('polygonData.npy')
+n,m,k=matrix.shape
+#
+# def findZeroRow(matrix):
+#     first = np.argwhere(matrix[:,0] == 0)
+#     second = np.argwhere(matrix[:, 1] == 0)
+#     third = np.argwhere(matrix[:, 2] == 0)
+#     index =[val for val in first if val in second and val in third]
+#     print(index)
+
+# for i in range(n):
+#     print('-----index-{}-------'.format(i))
+#     findZeroRow(matrix[i,:,:])
+# getMeshFromMatrix(matrix.reshape(1326,576,9),directory)
+temp = matrix[251,:,:]
+
 
 
 
@@ -22,13 +37,32 @@ os.environ['PATH'] = meshlabserver_path + os.pathsep + os.environ['PATH']
 # polgons.append(polygonOFWholeModel)
 #
 # np.save('aaaaaaaaaaaaa.npy',np.array(polgons))
+
+def changeToOneDimmension(matrix):
+    h,_=matrix.shape
+    result = []
+    for i in range(h):
+        result.append(tuple(matrix[i,:]))
+
+    return result
+
+# a = np.array([[1,2,3],[4,5,6],[7,8,9]])
+# print(changeToOneDimmension(a))
+# print(np.reshape(a,-1))
 #
-b = np.load('polygonTestData.npy')
-a = b.reshape(1326,576,9)
-
-print(a.shape)
-
-
+# vertex = np.array([(0, 0, 0),
+#                        (0, 1, 1),
+#                        (1, 0, 1),
+#                        (1, 1, 0)],
+#                       dtype=[('x', 'f4'), ('y', 'f4'),
+#                              ('z', 'f4')])
+# face = np.array([([0, 1, 2], 255, 255, 255),
+#                      ([0, 2, 3], 255,   0,   0),
+#                      ([0, 1, 3],   0, 255,   0),
+#                     ([1, 2, 3],   0,   0, 255)],
+#                     dtype=[('vertex_indices', 'i4', (3,)),
+#                            ('red', 'u1'), ('green', 'u1'),
+#                            ('blue', 'u1')])
 
 # cwd = os.getcwd()
 # originalDir = cwd + '/' + 'individual-plants/vegetation_0_2018-06-01_12-45-40/cloud.ply'

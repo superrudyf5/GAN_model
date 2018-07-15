@@ -36,8 +36,8 @@ def read_obj(file):
     # polygonOFWholeModel = np.zeros((1536, 3, 3))
     # tempPolygon = np.zeros((3, 3))
 
-    polygonOFWholeModel = np.zeros((NUM_POLYGONS,9))
-    tempPolygon = np.zeros((9))
+    polygonOFWholeModel = np.ones((NUM_POLYGONS,9))
+    tempPolygon = np.ones((9))
     for i_face in range(n_faces):
         if i_face < NUM_POLYGONS:
             faces.append([int(s) for s in file.readline().strip().split(' ')])

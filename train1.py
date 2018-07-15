@@ -1,10 +1,11 @@
 from model import *
 from load import loadData
 import numpy as np
-from utils import *
+from utils import lrelu
+from utils import getMeshFromMatrix
 import os
 
-n_epochs = 10
+n_epochs = 30000
 learning_rate = 0.008
 batch_size = 27
 z_size = 200
@@ -12,14 +13,14 @@ g_lr  = 0.008
 d_lr  = 0.000001
 beta  = 0.5
 d_thresh   = 0.8
-if os.path.exists('polygonTestData.npy'):
-    polygonBatch = np.load('polygonTestData.npy')
+if os.path.exists('polygonData.npy'):
+    polygonBatch = np.load('polygonData.npy')
 else:
     polygonBatch = loadData(1)
 
 NUM_POLYGONS = 576
 model_directory = './mlxFile/'
-train_sample_directory = './train_sample/'
+train_sample_directory = './train_sample3/'
 
 weights,biases = {},{}
 
@@ -63,7 +64,7 @@ def generator(z,batch_size = batch_size,phase_train=True,reuse = False):
 
 def discriminator(inputs, phase_train=True, reuse=False):
     print('------------inputs in Dis {}------------------'.format(inputs.shape))
-    strides = [1, 1, 1, 1]
+    strides = [1, 3, 3, 1]
     with tf.variable_scope("dis", reuse=reuse):
         d_1 = tf.nn.conv2d(inputs, weights['wd1'], strides=strides, padding="SAME")
         d_1 = tf.nn.bias_add(d_1, biases['bd1'])
@@ -75,17 +76,17 @@ def discriminator(inputs, phase_train=True, reuse=False):
         d_2 = tf.contrib.layers.batch_norm(d_2, is_training=phase_train)
         d_2 = tf.nn.leaky_relu(d_2)
 
-        d_3 = tf.nn.conv2d(d_2, weights['wd3'], strides=strides, padding="SAME")
+        d_3 = tf.nn.conv2d(d_2, weights['wd3'], strides=[1,4,1,1], padding="SAME")
         d_3 = tf.nn.bias_add(d_3, biases['bd3'])
         d_3 = tf.contrib.layers.batch_norm(d_3, is_training=phase_train)
         d_3 = tf.nn.leaky_relu(d_3)
 
-        d_4 = tf.nn.conv2d(d_3, weights['wd4'], strides=strides, padding="SAME")
+        d_4 = tf.nn.conv2d(d_3, weights['wd4'], strides=[1,4,1,1], padding="SAME")
         d_4 = tf.nn.bias_add(d_4, biases['bd4'])
         d_4 = tf.contrib.layers.batch_norm(d_4, is_training=phase_train)
         d_4 = tf.nn.leaky_relu(d_4)
 
-        d_5 = tf.nn.conv2d(d_4, weights['wd5'], strides=[1, 1, 1, 1], padding="SAME")
+        d_5 = tf.nn.conv2d(d_4, weights['wd5'], strides=[1, 4, 1, 1], padding="SAME")
         d_5 = tf.nn.bias_add(d_5, biases['bd5'])
         d_5 = tf.nn.sigmoid(d_5)
 
@@ -198,9 +199,12 @@ def trainGAN():
                                                          feed_dict={z_vector: z_sample, x_vector: next_polygon})
 
                 summary_g, generator_loss = sess.run([summary_g_loss, g_loss], feed_dict={z_vector: z_sample})
+                # d_output_z, d_output_x = sess.run([d_acc, n_p_x, n_p_z],
+                #                                 feed_dict={z_vector: z_sample, x_vector: next_polygon})
+
                 d_accuracy, n_x, n_z = sess.run([d_acc, n_p_x, n_p_z], feed_dict={z_vector: z_sample, x_vector: next_polygon})
-                # print('summary npz:{}---summary npx:{}---summary d_output_x:{}--summary d_output_z:{}--'.format(
-                #     summary_n_p_x, summary_n_p_z, summary_d_x_hist, summary_d_z_hist))
+                print('-epoch{}--n_p_x:{}--n_p_z:{}--'.format(
+                     epoch,n_x, n_z))
 
                 if d_accuracy < d_thresh:
                     sess.run([optimizer_op_d], feed_dict={z_vector: z_sample, x_vector: next_polygon})
@@ -212,17 +216,16 @@ def trainGAN():
                       generator_loss, "d_acc: ", d_accuracy)
 
                 # output generated chairs
-                if epoch % 2 == 0:
+                if epoch % 100 == 10:
                 # if epoch ==0:
                     g_model = sess.run(net_g_test, feed_dict={z_vector: z_sample})
                     if not os.path.exists(train_sample_directory):
                         os.makedirs(train_sample_directory)
                     print('-----========-------=====-----------=====-------------')
-                    print(g_model)
-                    print(g_model.shape)
-                    g_model.dump(train_sample_directory + '/' + str(epoch))
+                    getMeshFromMatrix(g_model.reshape(batch_size,NUM_POLYGONS,9),train_sample_directory,epoch)
+                    # g_model.dump(train_sample_directory + '/' + str(epoch))
 
-                if epoch % 2 == 0:
+                if epoch % 100 == 10:
                 # if epoch==0:
                     if not os.path.exists(model_directory):
                         os.makedirs(model_directory)

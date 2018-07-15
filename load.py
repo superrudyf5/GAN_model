@@ -13,8 +13,8 @@ def read_obj(file):
     plydata = PlyData.read(file)
     n_verts = plydata['vertex'].count
     n_faces = plydata['face'].count
-    polygonOFWholeModel = np.zeros((NUM_POLYGONS,9))
-    tempPolygon = np.zeros(9)
+    polygonOFWholeModel = np.ones((NUM_POLYGONS,9))
+    tempPolygon = np.ones(9)
     for i_face in range(n_faces):
         if i_face < NUM_POLYGONS:
             for i in range(3):

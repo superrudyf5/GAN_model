@@ -9,6 +9,9 @@ n_epochs = 30000
 learning_rate = 0.008
 batch_size = 27
 z_size = 200
+h1_size = 150
+h2_size = 300
+
 g_lr  = 0.008
 d_lr  = 0.000001
 beta  = 0.5
@@ -19,6 +22,7 @@ else:
     polygonBatch = loadData(1)
 
 NUM_POLYGONS = 576
+img_size = NUM_POLYGONS * 9
 model_directory = './mlxFile1/'
 train_sample_directory = './train_no_CNN_sample/'
 
@@ -28,78 +32,49 @@ def generator(z,batch_size = batch_size,phase_train=True,reuse = False):
     print('------------z shape {}------------------'.format(z.shape))
     # strides = [1,4,1,1]
     with tf.variable_scope("gen", reuse=reuse):
-        wg_1 = tf.Variable(tf.truncated_normal([z_size,]))
-        g_1 = tf.nn.relu(tf.matmul())
+        wg_1 = tf.Variable(tf.truncated_normal([z_size,h1_size],stddev=0.1),name="g_w1",dtype=tf.float32)
+        b_1 = tf.Variable(tf.zeros([h1_size]),name='g_b1',dtype=tf.float32)
+        h_1 = tf.nn.relu(tf.matmul(z,wg_1)+b_1)
 
-        # z = tf.reshape(z, (batch_size, 1, 1, z_size))
-        # g_1 = tf.nn.conv2d_transpose(z, weights['wg1'], (batch_size, 3, 3, 512), strides=[1, 3, 3, 1],
-        #                              padding="VALID")
-        # g_1 = tf.nn.bias_add(g_1, biases['bg1'])
-        # g_1 = tf.contrib.layers.batch_norm(g_1, is_training=phase_train)
-        # g_1 = tf.nn.relu(g_1)
-        #
-        # g_2 = tf.nn.conv2d_transpose(g_1, weights['wg2'], (batch_size, 9, 9, 256), strides=[1, 3, 3, 1], padding="SAME")
-        # g_2 = tf.nn.bias_add(g_2, biases['bg2'])
-        # g_2 = tf.contrib.layers.batch_norm(g_2, is_training=phase_train)
-        # g_2 = tf.nn.relu(g_2)
-        #
-        # g_3 = tf.nn.conv2d_transpose(g_2, weights['wg3'], (batch_size, 36, 9, 128), strides=strides,
-        #                              padding="SAME")
-        # g_3 = tf.nn.bias_add(g_3, biases['bg3'])
-        # g_3 = tf.contrib.layers.batch_norm(g_3, is_training=phase_train)
-        # g_3 = tf.nn.relu(g_3)
-        #
-        # g_4 = tf.nn.conv2d_transpose(g_3, weights['wg4'], (batch_size, 144, 9, 64), strides=strides, padding="SAME")
-        # g_4 = tf.nn.bias_add(g_4, biases['bg4'])
-        # g_4 = tf.contrib.layers.batch_norm(g_4, is_training=phase_train)
-        # g_4 = tf.nn.relu(g_4)
+        wg_2 = tf.Variable(tf.truncated_normal([h1_size, h2_size], stddev=0.1), name="g_w2", dtype=tf.float32)
+        b_2 = tf.Variable(tf.zeros([h2_size]), name='g_b2', dtype=tf.float32)
+        h_2 = tf.nn.relu(tf.matmul(h_1, wg_2) + b_2)
+
+        wg_3 = tf.Variable(tf.truncated_normal([h2_size, img_size], stddev=0.1), name="g_w3", dtype=tf.float32)
+        b_3 = tf.Variable(tf.zeros([img_size]), name='g_b3', dtype=tf.float32)
+        h_3 = tf.nn.relu(tf.matmul(h_2, wg_3) + b_3)
+
+        x_generate = tf.nn.tanh(h_3)
+        g_params = [wg_1,b_1,wg_2,b_2,wg_3,b_3]
+
         #
         # g_5 = tf.nn.conv2d_transpose(g_4, weights['wg5'], (batch_size, 576, 9, 1), strides=[1,4,1,1], padding="SAME")
         # g_5 = tf.nn.bias_add(g_5, biases['bg5'])
-        # g_5 = tf.nn.tanh(g_5)
-    print(g_1, 'g1')
-    print(g_2, 'g2')
-    print(g_3, 'g3')
-    print(g_4, 'g4')
-    print(g_5, 'g5')
 
-    return g_5
 
-def discriminator(inputs, phase_train=True, reuse=False):
-    print('------------inputs in Dis {}------------------'.format(inputs.shape))
-    strides = [1, 3, 3, 1]
+    return x_generate,g_params
+
+def discriminator(x_data,x_generate, phase_train=True, reuse=False,keep_prob = 0.8):
+    # print('------------inputs in Dis {}------------------'.format(inputs.shape))
+    # strides = [1, 3, 3, 1]
     with tf.variable_scope("dis", reuse=reuse):
-        d_1 = tf.nn.conv2d(inputs, weights['wd1'], strides=strides, padding="SAME")
-        d_1 = tf.nn.bias_add(d_1, biases['bd1'])
-        d_1 = tf.contrib.layers.batch_norm(d_1, is_training=phase_train)
-        d_1 = tf.nn.leaky_relu(d_1)
+        x_in = tf.concat(x_data,x_generate)
+        wd_1 = tf.Variable(tf.truncated_normal([img_size,h2_size],stddev = 0.1),name='d_w1',dtype=tf.float32)
+        b_1 = tf.Variable(tf.zeros([h2_size]),name='d_b1',dtype=tf.float32)
+        h1 = tf.nn.dropout(tf.nn.relu(tf.matmul(x_in,wd_1)+b_1),keep_prob)
 
-        d_2 = tf.nn.conv2d(d_1, weights['wd2'], strides=strides, padding="SAME")
-        d_2 = tf.nn.bias_add(d_2, biases['bd2'])
-        d_2 = tf.contrib.layers.batch_norm(d_2, is_training=phase_train)
-        d_2 = tf.nn.leaky_relu(d_2)
+        wd_2 = tf.Variable(tf.truncated_normal([h2_size,h1_size],stddev=0.1),name='d_w2',dtype=tf.float32)
+        b_2 = tf.Variable(tf.zeros([h1_size]),name='d_b2',dtype=tf.float32)
+        h2 = tf.nn.dropout(tf.nn.relu(tf.matmul(h1,wd_2)+b_2),keep_prob)
 
-        d_3 = tf.nn.conv2d(d_2, weights['wd3'], strides=[1,4,1,1], padding="SAME")
-        d_3 = tf.nn.bias_add(d_3, biases['bd3'])
-        d_3 = tf.contrib.layers.batch_norm(d_3, is_training=phase_train)
-        d_3 = tf.nn.leaky_relu(d_3)
+        wd_3 = tf.Variable(tf.truncated_normal([h1_size,1],stddev=0.1),name='d_w3',dtype=tf.float32)
+        b_3 = tf.Variable(tf.zeros([1]),name='d_b3',dtype=tf.float32)
+        h3 = tf.matmul(h2,wd_3) +b_3
 
-        d_4 = tf.nn.conv2d(d_3, weights['wd4'], strides=[1,4,1,1], padding="SAME")
-        d_4 = tf.nn.bias_add(d_4, biases['bd4'])
-        d_4 = tf.contrib.layers.batch_norm(d_4, is_training=phase_train)
-        d_4 = tf.nn.leaky_relu(d_4)
-
-        d_5 = tf.nn.conv2d(d_4, weights['wd5'], strides=[1, 4, 1, 1], padding="SAME")
-        d_5 = tf.nn.bias_add(d_5, biases['bd5'])
-        d_5 = tf.nn.sigmoid(d_5)
-
-    print(d_1, 'd1')
-    print(d_2, 'd2')
-    print(d_3, 'd3')
-    print(d_4, 'd4')
-    print(d_5, 'd5')
-
-    return d_5
+        y_data = tf.nn.sigmoid(tf.slice(h3,[0,0],[batch_size,-1],name=None))
+        y_generated = tf.nn.sigmoid(tf.slice(h3,[batch_size,0],[-1,-1],name=None))
+        d_params = [wd_1,b_1,wd_2,b_2,wd_3,b_3]
+    return y_data,y_generated,d_params
 
 
 

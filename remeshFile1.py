@@ -6,14 +6,14 @@ meshlabserver_path = '/Applications/meshlab.app/Contents/MacOS/'
 os.environ['PATH'] = meshlabserver_path + os.pathsep + os.environ['PATH']
 out_path = os.getcwd()+'/model'
 cwd = os.getcwd()
-# originalDir = cwd + '/' + 'individual-plants'
+originalDir = cwd + '/' + 'individual-plants/'
 # subSamping = cwd + '/' + 'subsamping_mesh1/'
-originalDir = cwd + '/' + 'subsamping_mesh2/'
-finalMesh = cwd +'/finalMesh/'
+# originalDir = cwd + '/' + 'subsamping_mesh2/'
+finalMesh = cwd +'/reRenderMeshFiles/'
 Path_Mlx = cwd+ '/mlxFile'
 HEADER_LENGTH = 13
 
-NUMBER_OF_FACES = 576
+# NUMBER_OF_FACES = 576
 
 
 if __name__ == '__main__':
@@ -26,13 +26,13 @@ if __name__ == '__main__':
             # file = open(originalDir+'/'+fileName+'/cloud.ply', 'r')
             # for i in range(HEADER_LENGTH):
             #     s = file.readline().strip().split(' ')
-            plydata = PlyData.read(originalDir+fileName)
+            # plydata = PlyData.read(originalDir+fileName)
 
-            n_faces = n_faces = plydata['face'].count
-            if n_faces >= NUMBER_OF_FACES:
-                in_mesh = originalDir + fileName
-                out_mesh = finalMesh + fileName
-                re_mesh = mlx.FilterScript(file_in=in_mesh,file_out=out_mesh, ml_version='2016.12')
+            # n_faces = n_faces = plydata['face'].count
+            # if n_faces >= NUMBER_OF_FACES:
+            in_mesh = originalDir + fileName+'/cloud.ply'
+            out_mesh = finalMesh + fileName+'_cloud.ply'
+            re_mesh = mlx.FilterScript(file_in=in_mesh,file_out=out_mesh, ml_version='2016.12')
 
                         # mlx.sampling.mesh_element(script=re_mesh, sample_num=2000, element='VERT')
                         # mlx.layers.delete_lower(script=re_mesh,layer_num=1)
@@ -44,18 +44,18 @@ if __name__ == '__main__':
             #      refine_layer=0, best_sample=True, best_sample_pool=10,
             #      exact_num=False, radius_variance=1.0)
             # mlx.layers.change(re_mesh,0)
-                mlx.remesh.simplify(re_mesh,texture=False,faces=NUMBER_OF_FACES,
-                                    target_perc=0.0,quality_thr=0.3,preserve_boundary=False,
-                                    boundary_weight=1.0,preserve_normal=False,
-                                    optimal_placement=True,planar_quadric=False,
-                                    selected=False,extra_tex_coord_weight=1.0,
-                                    preserve_topology=True,quality_weight=False,
-                                    autoclean=True)
+            #     mlx.remesh.simplify(re_mesh,texture=False,faces=NUMBER_OF_FACES,
+            #                         target_perc=0.0,quality_thr=0.3,preserve_boundary=False,
+            #                         boundary_weight=1.0,preserve_normal=False,
+            #                         optimal_placement=True,planar_quadric=False,
+            #                         selected=False,extra_tex_coord_weight=1.0,
+            #                         preserve_topology=True,quality_weight=False,
+            #                         autoclean=True)
 
             # mlx.sampling.mesh_element(re_mesh, sample_num=1000, element='VERT')
 
-                        # mlx.normals.point_sets(script=re_mesh, neighbors=10, smooth_iteration=0, flip=False,
-                        # viewpoint_pos=(0.0, 0.0, 0.0))
+            mlx.normals.point_sets(script=re_mesh, neighbors=10, smooth_iteration=0, flip=False,
+            viewpoint_pos=(0.0, 0.0, 0.0))
 
 
             # mlx.remesh.curvature_flipping(re_mesh, angle_threshold=1.0, curve_type=0,
@@ -71,8 +71,8 @@ if __name__ == '__main__':
             # mlx.run()
             # re_mesh.run_script(script_file=Path_Mlx+'/BallPivoting.mlx')
 
-                re_mesh.run_script()
-            # re_mesh.run_script(script_file='/Users/apple/PycharmProjects/GAN_model/GAN_Plants/mlxFile/BallPivoting.mlx')
+                # re_mesh.run_script()
+            re_mesh.run_script(script_file='/Users/apple/PycharmProjects/GAN_model/GAN_Plants/mlxFile/BallPivoting.mlx')
             # built_mesh = mlx.FilterScript(file_in=in_mesh, file_out=out_mesh, ml_version='2016.12')
             # built_mesh.run_script(script_file=Path_Mlx+'BallPivoting.mlx')
     #         file.close()

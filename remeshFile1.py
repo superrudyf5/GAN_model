@@ -9,7 +9,7 @@ cwd = os.getcwd()
 originalDir = cwd + '/' + 'individual-plants/'
 # subSamping = cwd + '/' + 'subsamping_mesh1/'
 # originalDir = cwd + '/' + 'subsamping_mesh2/'
-finalMesh = cwd +'/reRenderMeshFiles/'
+finalMesh = cwd +'/generateMesh/'
 Path_Mlx = cwd+ '/mlxFile'
 HEADER_LENGTH = 13
 

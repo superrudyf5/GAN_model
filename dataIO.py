@@ -3,7 +3,7 @@ import os
 import numpy as np
 LOCAL_PATH = 'generateMesh/'
 
-def getAll(train=True, cube_len=32, obj_ratio=1.0):
+def getAll(train=True, cube_len=64, obj_ratio=1.0):
 
     objPath = LOCAL_PATH
     # objPath += 'train/' if train else 'test/'
@@ -12,10 +12,8 @@ def getAll(train=True, cube_len=32, obj_ratio=1.0):
     volumeBatch = np.zeros((len(fileList),cube_len,cube_len,cube_len))
     count = 0
     for file in fileList:
-        print(LOCAL_PATH+file)
         with open(LOCAL_PATH+file, 'rb') as f:
             volumeBatch[count] = binvox_rw.read_as_3d_array(f).data
-
     return volumeBatch
 
 # def getVolumeFromOFF(path, sideLen=32):

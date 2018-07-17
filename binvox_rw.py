@@ -18,48 +18,48 @@
 """
 Binvox to Numpy and back.
 
-
->>> import numpy as np
->>> import binvox_rw
->>> with open('chair.binvox', 'rb') as f:
-...     m1 = binvox_rw.read_as_3d_array(f)
-...
->>> m1.dims
-[32, 32, 32]
->>> m1.scale
-41.133000000000003
->>> m1.translate
-[0.0, 0.0, 0.0]
->>> with open('chair_out.binvox', 'wb') as f:
-...     m1.write(f)
-...
->>> with open('chair_out.binvox', 'rb') as f:
-...     m2 = binvox_rw.read_as_3d_array(f)
-...
->>> m1.dims==m2.dims
-True
->>> m1.scale==m2.scale
-True
->>> m1.translate==m2.translate
-True
->>> np.all(m1.data==m2.data)
-True
-
->>> with open('chair.binvox', 'rb') as f:
-...     md = binvox_rw.read_as_3d_array(f)
-...
->>> with open('chair.binvox', 'rb') as f:
-...     ms = binvox_rw.read_as_coord_array(f)
-...
->>> data_ds = binvox_rw.dense_to_sparse(md.data)
->>> data_sd = binvox_rw.sparse_to_dense(ms.data, 32)
->>> np.all(data_sd==md.data)
-True
->>> # the ordering of elements returned by numpy.nonzero changes with axis
->>> # ordering, so to compare for equality we first lexically sort the voxels.
->>> np.all(ms.data[:, np.lexsort(ms.data)] == data_ds[:, np.lexsort(data_ds)])
-True
-"""
+#
+# >>> import numpy as np
+# >>> import binvox_rw
+# >>> with open('chair.binvox', 'rb') as f:
+# ...     m1 = binvox_rw.read_as_3d_array(f)
+# ...
+# >>> m1.dims
+# [32, 32, 32]
+# >>> m1.scale
+# 41.133000000000003
+# >>> m1.translate
+# [0.0, 0.0, 0.0]
+# >>> with open('chair_out.binvox', 'wb') as f:
+# ...     m1.write(f)
+# ...
+# >>> with open('chair_out.binvox', 'rb') as f:
+# ...     m2 = binvox_rw.read_as_3d_array(f)
+# ...
+# >>> m1.dims==m2.dims
+# True
+# >>> m1.scale==m2.scale
+# True
+# >>> m1.translate==m2.translate
+# True
+# >>> np.all(m1.data==m2.data)
+# True
+#
+# >>> with open('chair.binvox', 'rb') as f:
+# ...     md = binvox_rw.read_as_3d_array(f)
+# ...
+# >>> with open('chair.binvox', 'rb') as f:
+# ...     ms = binvox_rw.read_as_coord_array(f)
+# ...
+# >>> data_ds = binvox_rw.dense_to_sparse(md.data)
+# >>> data_sd = binvox_rw.sparse_to_dense(ms.data, 32)
+# >>> np.all(data_sd==md.data)
+# True
+# >>> # the ordering of elements returned by numpy.nonzero changes with axis
+# >>> # ordering, so to compare for equality we first lexically sort the voxels.
+# >>> np.all(ms.data[:, np.lexsort(ms.data)] == data_ds[:, np.lexsort(data_ds)])
+# True
+# """
 
 import numpy as np
 

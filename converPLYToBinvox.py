@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 
-voxsize = 32
+voxsize = 64
 paths = glob.glob("generateMesh/*.ply")
 print ("number of data:", len(paths))
 

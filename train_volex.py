@@ -2,17 +2,19 @@ from model import *
 import numpy as np
 import os
 import dataIO
+import utils
 
 
-n_epochs = 30000
-learning_rate = 0.008
-batch_size = 50
+n_epochs = 10000
+
+batch_size = 32
 z_size = 200
-g_lr  = 0.008
-d_lr  = 0.000001
+g_lr  = 0.00001
+d_lr  = 0.00001
 beta  = 0.5
 leak_value = 0.2
 d_thresh   = 0.8
+obj_ratio  = 0.5
 # if os.path.exists('polygonData.npy'):
 #     polygonBatch = np.load('polygonData.npy')
 # else:
@@ -20,39 +22,38 @@ d_thresh   = 0.8
 
 NUM_POLYGONS = 576
 model_directory = './mlxFile/'
-train_sample_directory = './train_sample_vox/'
+train_sample_directory = './train_sample_vox1/'
 
 weights,biases = {},{}
 
 def generator(z,batch_size = batch_size,phase_train=True,reuse = False):
-    print('------------z shape {}------------------'.format(z.shape))
     strides = [1,2,2,2,1]
     with tf.variable_scope("gen", reuse=reuse):
-        g_1 = tf.add(tf.matmul(z, weights['wg1']), biases['bg1'])
-        g_1 = tf.reshape(g_1, [-1, 4, 4, 4, 512])
+        z = tf.reshape(z, (batch_size, 1, 1, 1, z_size))
+        g_1 = tf.nn.conv3d_transpose(z, weights['wg1'], (batch_size, 4, 4, 4, 512), strides=[1, 1, 1, 1, 1],
+                                     padding="VALID")
+        g_1 = tf.nn.bias_add(g_1, biases['bg1'])
         g_1 = tf.contrib.layers.batch_norm(g_1, is_training=phase_train)
+        g_1 = utils.lrelu(g_1)
 
-        g_2 = tf.nn.conv3d_transpose(g_1, weights['wg2'], output_shape=[batch_size, 8, 8, 8, 256], strides=strides,
-                                     padding="SAME")
+        g_2 = tf.nn.conv3d_transpose(g_1, weights['wg2'], output_shape=[batch_size, 8, 8, 8, 256], strides=strides, padding="SAME")
         g_2 = tf.nn.bias_add(g_2, biases['bg2'])
         g_2 = tf.contrib.layers.batch_norm(g_2, is_training=phase_train)
-        g_2 = tf.nn.relu(g_2)
+        g_2 = utils.lrelu(g_2)
 
-        g_3 = tf.nn.conv3d_transpose(g_2, weights['wg3'], output_shape=[batch_size, 16, 16, 16, 128], strides=strides,
-                                     padding="SAME")
+        g_3 = tf.nn.conv3d_transpose(g_2, weights['wg3'], output_shape=[batch_size, 16, 16, 16, 128], strides=strides, padding="SAME")
         g_3 = tf.nn.bias_add(g_3, biases['bg3'])
         g_3 = tf.contrib.layers.batch_norm(g_3, is_training=phase_train)
-        g_3 = tf.nn.relu(g_3)
+        g_3 = utils.lrelu(g_3)
 
-        g_4 = tf.nn.conv3d_transpose(g_3, weights['wg4'], output_shape=[batch_size, 32, 32, 32, 1], strides=strides,                       padding="SAME")
+        g_4 = tf.nn.conv3d_transpose(g_3, weights['wg4'], output_shape=[batch_size, 32, 32, 32, 64], strides=strides, padding="SAME")
         g_4 = tf.nn.bias_add(g_4, biases['bg4'])
-        g_4 = tf.nn.relu(g_4)
+        g_4 = tf.contrib.layers.batch_norm(g_4, is_training=phase_train)
+        g_4 = utils.lrelu(g_4)
 
-        g_5 = tf.nn.conv3d_transpose(g_4, weights['wg5'], output_shape=[batch_size, 64, 64, 64, 1], strides=strides,                           padding="SAME")
-        g_5 = tf.nn.bias_add(g_5, biases['bg4'])
-        g_5 = tf.nn.sigmoid(g_5)
-
-
+        g_5 = tf.nn.conv3d_transpose(g_4, weights['wg5'], output_shape=[batch_size, 64, 64, 64, 1], strides=strides, padding="SAME")
+        g_5 = tf.nn.bias_add(g_5, biases['bg5'])
+        g_5 = tf.nn.tanh(g_5)
     print(g_1, 'g1')
     print(g_2, 'g2')
     print(g_3, 'g3')
@@ -62,28 +63,27 @@ def generator(z,batch_size = batch_size,phase_train=True,reuse = False):
     return g_5
 
 def discriminator(inputs, phase_train=True, reuse=False):
-    print('------------inputs in Dis {}------------------'.format(inputs.shape))
     strides = [1, 2, 2, 2, 1]
     with tf.variable_scope("dis", reuse=reuse):
         d_1 = tf.nn.conv3d(inputs, weights['wd1'], strides=strides, padding="SAME")
         d_1 = tf.nn.bias_add(d_1, biases['bd1'])
         d_1 = tf.contrib.layers.batch_norm(d_1, is_training=phase_train)
-        d_1 = tf.nn.leaky_relu(d_1,leak_value)
+        d_1 = utils.lrelu(d_1,leak_value)
 
         d_2 = tf.nn.conv3d(d_1, weights['wd2'], strides=strides, padding="SAME")
         d_2 = tf.nn.bias_add(d_2, biases['bd2'])
         d_2 = tf.contrib.layers.batch_norm(d_2, is_training=phase_train)
-        d_2 = tf.nn.leaky_relu(d_2,leak_value)
+        d_2 = utils.lrelu(d_2,leak_value)
 
         d_3 = tf.nn.conv3d(d_2, weights['wd3'], strides=strides, padding="SAME")
         d_3 = tf.nn.bias_add(d_3, biases['bd3'])
         d_3 = tf.contrib.layers.batch_norm(d_3, is_training=phase_train)
-        d_3 = tf.nn.leaky_relu(d_3,leak_value)
+        d_3 = utils.lrelu(d_3,leak_value)
 
         d_4 = tf.nn.conv3d(d_3, weights['wd4'], strides=strides, padding="SAME")
         d_4 = tf.nn.bias_add(d_4, biases['bd4'])
         d_4 = tf.contrib.layers.batch_norm(d_4, is_training=phase_train)
-        d_4 = tf.nn.leaky_relu(d_4,leak_value)
+        d_4 = utils.lrelu(d_4,leak_value)
 
         d_5 = tf.nn.conv3d(d_4, weights['wd5'], strides=[1, 1, 1, 1, 1], padding="VALID")
         d_5 = tf.nn.bias_add(d_5, biases['bd5'])
@@ -138,7 +138,7 @@ def initialiseBiases():
 def trainGAN():
     weights,biases = initialiseWeights(),initialiseBiases()
     z_vector = tf.placeholder(shape=[batch_size, z_size], dtype=tf.float32)
-    x_vector = tf.placeholder(shape=[batch_size, 32,32,32, 1], dtype=tf.float32)
+    x_vector = tf.placeholder(shape=[batch_size, 64,64,64,1], dtype=tf.float32)
 
     net_g_train = generator(z_vector, phase_train=True, reuse=False)
 
@@ -182,55 +182,63 @@ def trainGAN():
         z_sample = np.random.normal(0, 0.33, size=[batch_size, z_size]).astype(np.float32)
         volumes = dataIO.getAll(train=True)
         volumes = volumes[..., np.newaxis].astype(np.float)
+
         for epoch in range(n_epochs):
-            for start, end in zip(
-                    range(0, len(volumes), batch_size),
-                    range(batch_size, len(volumes), batch_size)):
-                x = volumes[start:end].reshape(batch_size,32,32,32, 1)
+            idx = np.random.randint(len(volumes),size=batch_size)
+            x = volumes[idx]
+            z = np.random.normal(0,0.33,size=[batch_size,z_size]).astype(np.float32)
 
-                d_summary_merge = tf.summary.merge([summary_d_loss,
-                                                    summary_d_x_hist,
-                                                    summary_d_z_hist,
-                                                    summary_n_p_x,
-                                                    summary_n_p_z,
-                                                    summary_d_acc])
+            #
 
-                summary_d, discriminator_loss = sess.run([d_summary_merge, d_loss],
-                                                         feed_dict={z_vector: z_sample, x_vector: x})
+            # for start, end in zip(
+            #         range(0, len(volumes), batch_size),
+            # #         range(batch_size, len(volumes), batch_size)):
+            #     x = volumes[start:end].reshape(batch_size,64,64,64, 1)
 
-                summary_g, generator_loss = sess.run([summary_g_loss, g_loss], feed_dict={z_vector: z_sample})
-                # d_output_z, d_output_x = sess.run([d_acc, n_p_x, n_p_z],
-                #                                 feed_dict={z_vector: z_sample, x_vector: next_polygon})
+            d_summary_merge = tf.summary.merge([summary_d_loss,
+                                                summary_d_x_hist,
+                                                summary_d_z_hist,
+                                                summary_n_p_x,
+                                                summary_n_p_z,
+                                                summary_d_acc])
 
-                d_accuracy, n_x, n_z = sess.run([d_acc, n_p_x, n_p_z], feed_dict={z_vector: z_sample, x_vector: x})
-                print('-epoch{}--n_p_x:{}--n_p_z:{}--'.format(
-                     epoch,n_x, n_z))
+            summary_d, discriminator_loss = sess.run([d_summary_merge, d_loss],
+                                                     feed_dict={z_vector: z, x_vector: x})
 
-                if d_accuracy < d_thresh:
-                    sess.run([optimizer_op_d], feed_dict={z_vector: z_sample, x_vector: x})
-                    print('Discriminator Training ', "epoch: ", epoch, ', d_loss:', discriminator_loss, 'g_loss:',
-                          generator_loss, "d_acc: ", d_accuracy)
+            summary_g, generator_loss = sess.run([summary_g_loss, g_loss], feed_dict={z_vector: z})
+            # d_output_z, d_output_x = sess.run([d_acc, n_p_x, n_p_z],
+            #                                 feed_dict={z_vector: z_sample, x_vector: next_polygon})
 
-                sess.run([optimizer_op_g], feed_dict={z_vector: z_sample})
-                print('Generator Training ', "epoch: ", epoch, ', d_loss:', discriminator_loss, 'g_loss:',
+            d_accuracy, n_x, n_z = sess.run([d_acc, n_p_x, n_p_z], feed_dict={z_vector: z, x_vector: x})
+            print('-epoch{}--n_p_x:{}--n_p_z:{}--'.format(
+                 epoch,n_x, n_z))
+
+            if d_accuracy < d_thresh:
+                sess.run([optimizer_op_d], feed_dict={z_vector: z, x_vector: x})
+                print('Discriminator Training ', "epoch: ", epoch, ', d_loss:', discriminator_loss, 'g_loss:',
                       generator_loss, "d_acc: ", d_accuracy)
 
-                # output generated chairs
-                if epoch % 200 == 10:
-                # if epoch ==0:
-                    g_model = sess.run(net_g_test, feed_dict={z_vector: z_sample})
-                    if not os.path.exists(train_sample_directory):
-                        os.makedirs(train_sample_directory)
-                    print('-----========-------=====-----------=====-------------')
-                    g_model.save(train_sample_directory+'/'+str(epoch))
-                    # getMeshFromMatrix(g_model.reshape(batch_size,NUM_POLYGONS,9),train_sample_directory,epoch)
-                    # g_model.dump(train_sample_directory + '/' + str(epoch))
+            sess.run([optimizer_op_g], feed_dict={z_vector: z})
+            print('Generator Training ', "epoch: ", epoch, ', d_loss:', discriminator_loss, 'g_loss:',
+                  generator_loss, "d_acc: ", d_accuracy)
 
-                if epoch % 200 == 10:
-                # if epoch==0:
-                    if not os.path.exists(model_directory):
-                        os.makedirs(model_directory)
-                    saver.save(sess, save_path=model_directory + '/' + str(epoch) + '.cptk')
+            # output generated chairs
+            if epoch % 500 == 10:
+            # if epoch ==0:
+                g_model = sess.run(net_g_test, feed_dict={z_vector: z_sample})
+                if not os.path.exists(train_sample_directory):
+                    os.makedirs(train_sample_directory)
+                print('-----========-------=====-----------=====-------------')
+                np.save(train_sample_directory+'/'+str(epoch)+'_model.npy', g_model)
+                # g_model.save(train_sample_directory+'/'+str(epoch))
+                # getMeshFromMatrix(g_model.reshape(batch_size,NUM_POLYGONS,9),train_sample_directory,epoch)
+                # g_model.dump(train_sample_directory + '/' + str(epoch))
+
+            if epoch % 500 == 10:
+            # if epoch==0:
+                if not os.path.exists(model_directory):
+                    os.makedirs(model_directory)
+                saver.save(sess, save_path=model_directory + '/' + str(epoch) + '.cptk')
 
 if __name__ == '__main__':
     # is_dummy =

@@ -1,7 +1,8 @@
 import binvox_rw
+import tensorflow as tf
 import os
 import numpy as np
-LOCAL_PATH = 'generateMesh/'
+LOCAL_PATH = 'MeshData_32/'
 
 def getAll(train=True, cube_len=64, obj_ratio=1.0):
 
@@ -15,7 +16,8 @@ def getAll(train=True, cube_len=64, obj_ratio=1.0):
         with open(LOCAL_PATH+file, 'rb') as f:
             volumeBatch[count] = binvox_rw.read_as_3d_array(f).data
     return volumeBatch
-
+def lrelu(x, leak=0.2):
+    return tf.maximum(x, leak*x)
 # def getVolumeFromOFF(path, sideLen=32):
 #     mesh = trimesh.load(path)
 #     volume = trimesh.voxel.Voxel(mesh, 0.5).raw

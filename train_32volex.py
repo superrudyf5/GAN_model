@@ -9,8 +9,8 @@ n_epochs = 10000
 
 batch_size = 32
 z_size = 200
-g_lr  = 0.0025
-d_lr  = 0.00001
+alpha_d    = 0.0015
+alpha_g    = 0.000025
 beta  = 0.5
 leak_value = 0.2
 d_thresh   = 0.8
@@ -40,21 +40,22 @@ def generator(z,batch_size = batch_size,phase_train=True,reuse = False):
         g_1 = tf.add(tf.matmul(z, weights['wg1']), biases['bg1'])
         g_1 = tf.reshape(g_1, [-1, 4, 4, 4, 512])
         g_1 = tf.contrib.layers.batch_norm(g_1, is_training=phase_train)
+        # g_1 = tf.nn.relu(g_1)
 
         g_2 = tf.nn.conv3d_transpose(g_1, weights['wg2'], output_shape=[batch_size, 8, 8, 8, 256], strides=strides, padding="SAME")
         g_2 = tf.nn.bias_add(g_2, biases['bg2'])
         g_2 = tf.contrib.layers.batch_norm(g_2, is_training=phase_train)
-        g_2 = utils.lrelu(g_2)
+        g_2 = tf.nn.relu(g_2)
 
         g_3 = tf.nn.conv3d_transpose(g_2, weights['wg3'], output_shape=[batch_size, 16, 16, 16, 128], strides=strides, padding="SAME")
         g_3 = tf.nn.bias_add(g_3, biases['bg3'])
         g_3 = tf.contrib.layers.batch_norm(g_3, is_training=phase_train)
-        g_3 = utils.lrelu(g_3)
+        g_3 = tf.nn.relu(g_3)
 
         g_4 = tf.nn.conv3d_transpose(g_3, weights['wg4'], output_shape=[batch_size, 32, 32, 32, 1], strides=strides, padding="SAME")
         g_4 = tf.nn.bias_add(g_4, biases['bg4'])
         g_4 = tf.contrib.layers.batch_norm(g_4, is_training=phase_train)
-        g_4 = utils.lrelu(g_4)
+        g_4 = tf.nn.sigmoid(g_4)
         #
         # g_5 = tf.nn.conv3d_transpose(g_4, weights['wg5'], output_shape=[batch_size, 64, 64, 64, 1], strides=strides, padding="SAME")
         # g_5 = tf.nn.bias_add(g_5, biases['bg5'])
@@ -181,9 +182,9 @@ def trainGAN():
     # para_d = [var for var in tf.trainable_variables() if any(x in var.name for x in ['wd', 'bd', 'dis'])]
 
     # only update the weights for the discriminator network
-    optimizer_op_d = tf.train.AdamOptimizer(learning_rate=d_lr, beta1=beta).minimize(d_loss, var_list=para_d)
+    optimizer_op_d = tf.train.AdamOptimizer(learning_rate=alpha_d, beta1=beta).minimize(d_loss, var_list=para_d)
     # only update the weights for the generator network
-    optimizer_op_g = tf.train.AdamOptimizer(learning_rate=g_lr, beta1=beta).minimize(g_loss, var_list=para_g)
+    optimizer_op_g = tf.train.AdamOptimizer(learning_rate=alpha_g, beta1=beta).minimize(g_loss, var_list=para_g)
 
     saver = tf.train.Saver(max_to_keep=50)
     with tf.Session() as sess:
@@ -218,19 +219,28 @@ def trainGAN():
             # d_output_z, d_output_x = sess.run([d_acc, n_p_x, n_p_z],
             #                                 feed_dict={z_vector: z_sample, x_vector: next_polygon})
 
-            d_accuracy, n_x, n_z = sess.run([d_acc, n_p_x, n_p_z], feed_dict={z_vector: z, x_vector: x})
-            print('-epoch{}--n_p_x:{}--n_p_z:{}--'.format(
-                 epoch,n_x, n_z))
+            # d_accuracy, n_x, n_z = sess.run([d_acc, n_p_x, n_p_z], feed_dict={z_vector: z, x_vector: x})
+            # print('-epoch{}--n_p_x:{}--n_p_z:{}--'.format(
+            #      epoch,n_x, n_z))
+            #
+            # if d_accuracy < d_thresh:
+            #     sess.run([optimizer_op_d], feed_dict={z_vector: z, x_vector: x})
+            #     print('Discriminator Training ', "epoch: ", epoch, ', d_loss:', discriminator_loss, 'g_loss:',
+            #           generator_loss, "d_acc: ", d_accuracy)
+            #
+            # sess.run([optimizer_op_g], feed_dict={z_vector: z})
+            # print('Generator Training ', "epoch: ", epoch, ', d_loss:', discriminator_loss, 'g_loss:',
+            #       generator_loss, "d_acc: ", d_accuracy)
 
-            if d_accuracy < d_thresh:
+            if discriminator_loss <= 4.6 * 0.1:
+                sess.run([optimizer_op_g], feed_dict={z_vector: z})
+            elif generator_loss <= 4.6 * 0.1:
                 sess.run([optimizer_op_d], feed_dict={z_vector: z, x_vector: x})
-                print('Discriminator Training ', "epoch: ", epoch, ', d_loss:', discriminator_loss, 'g_loss:',
-                      generator_loss, "d_acc: ", d_accuracy)
+            else:
+                sess.run([optimizer_op_d], feed_dict={z_vector: z, x_vector: x})
+                sess.run([optimizer_op_g], feed_dict={z_vector: z})
 
-            sess.run([optimizer_op_g], feed_dict={z_vector: z})
-            print('Generator Training ', "epoch: ", epoch, ', d_loss:', discriminator_loss, 'g_loss:',
-                  generator_loss, "d_acc: ", d_accuracy)
-
+            print("epoch: ", epoch, ', d_loss:', discriminator_loss, 'g_loss:', generator_loss)
             # output generated chairs
             if epoch % 500 == 10:
             # if epoch ==0:

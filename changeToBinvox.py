@@ -19,14 +19,14 @@ def read_binvox(filename):
 
 if __name__ == '__main__':
     # fileName = 'binvox-rw-py/test1.binvox'
-    data = np.load('GenerateModel/2010_model.npy')
-    # with open('GenerateMesh/vegetation_22_2018-06-01_12-45-45_cloud.binvox', 'rb') as f:
+    data = np.load('GenerateModel/2410_model.npy')
+    # with open('MeshData_32/vegetation_22_2018-06-01_12-45-45_cloud.binvox', 'rb') as f:
     #     data1 = binvox_rw.read_as_3d_array(f)
 
-
-    print(data[10])
+    print(data.shape)
+    print(data[1])
     # model_data = data1.data.reshape(64,64,64) >0.5
-    model_data = data[10].reshape(64, 64, 64) > 0
+    model_data = data[1].reshape(64, 64, 64) > 0.5
     x,y,z = np.where(model_data == True)
     print(x)
     print(y)
@@ -39,6 +39,7 @@ if __name__ == '__main__':
         # print(index_true)
         temp[x[i],y[i],z[i]] = 1
     xx, yy, zz = np.where(temp == 1)
+
     mlab.points3d(xx, yy, zz,
                   mode="cube",
                   color=(1, 1, 1),

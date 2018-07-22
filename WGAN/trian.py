@@ -66,7 +66,10 @@ def discriminator(inputs,phase_train=True, reuse=False):
         d_4 = tf.contrib.layers.layer_norm(d_4)
         d_4 = tf.nn.leaky_relu(d_4,leak_value)
 
-        d_5 = tf.nn.conv3d(d_4,weights['wd5'],strides=[1,1,1,1,1],padding='SAME')
+        shape = d_4.get_shape().as_list()
+        dim = np.prod(shape[1:])
+        d_5 = tf.reshape(d_4, shape=[-1, dim])
+        d_5 = tf.add(tf.matmul(d_5, weights['wd5']))
 
     print(d_1, 'd1')
     print(d_2, 'd2')
@@ -87,8 +90,8 @@ def initialiseWeights():
     weights['wd1'] = tf.get_variable('wd1',shape=[4,4,4,1,64],initializer=xavier_init)
     weights['wd2'] = tf.get_variable('wd2',shape=[4,4,4,64,128],initializer=xavier_init)
     weights['wd3'] = tf.get_variable('wd3',shape=[4,4,4,128,256],initializer=xavier_init)
-    weights['wd4'] = tf.get_variable('wd4',shape=[4,4,4,256,512],initializer=xavier_init)
-    weights['wd5'] = tf.get_variable('wd5',shape=[4,4,4,512,1],initializer=xavier_init)
+    weights['wd4'] = tf.get_variable('wd4',shape=[2,2,2,256,512],initializer=xavier_init)
+    weights['wd5'] = tf.get_variable('wd5',shape=[2*2*2*512,1],initializer=xavier_init)
 def trainGAN():
     weights = initialiseWeights()
     z = tf.placeholder(shape=[batch_size,z_size],dtype=tf.float32)

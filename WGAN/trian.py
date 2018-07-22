@@ -14,6 +14,7 @@ leak_value = 0.2
 cube_len = 64
 
 volumes = dataIO.getAll(cube_len=cube_len)
+volumes = volumes[..., np.newaxis].astype(np.float)
 out_directory = './out/'
 model_directory = './model/'
 

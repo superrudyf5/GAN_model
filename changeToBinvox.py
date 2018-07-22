@@ -19,15 +19,22 @@ def read_binvox(filename):
 
 if __name__ == '__main__':
     # fileName = 'binvox-rw-py/test1.binvox'
-    data = np.load('GenerateModel/2410_model.npy')
-    # with open('MeshData_32/vegetation_22_2018-06-01_12-45-45_cloud.binvox', 'rb') as f:
-    #     data1 = binvox_rw.read_as_3d_array(f)
+    data = np.load('GenerateModel/1110_model.npy')
+    # with open('generateMesh/vegetation_9_2018-06-01_12-45-52_cloud.binvox', 'rb') as f:
+    #     vox = binvox_rw.read_as_3d_array(f)
 
-    print(data.shape)
-    print(data[1])
+    # test =vox.data[..., np.newaxis].astype(np.float)
+    # test_numpy = test.reshape(64,64,64) > 0.5
+    # # a,b,c = np.where(test_numpy == True)
+    # # print(a)
+    # # print(b)
+    #
+    print(data[4])
+    # print(test>0.5)
     # model_data = data1.data.reshape(64,64,64) >0.5
-    model_data = data[1].reshape(64, 64, 64) > 0.5
-    x,y,z = np.where(model_data == True)
+    model_data = data[4].reshape(64, 64, 64) > 0.5
+
+    x,y,z = np.where( model_data == True)
     print(x)
     print(y)
     print(z)

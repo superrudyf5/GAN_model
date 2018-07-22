@@ -7,9 +7,13 @@ import utils
 
 n_epochs = 10000
 z_size = 200
-batch_size = 32
-g_lr  = 0.0002
-d_lr  = 0.0002
+batch_size = 50
+n_critic = 5
+CRITIC_NUM = 5
+LAMBDA = 10
+
+g_lr  = 5e-5
+d_lr  = 5e-5
 beta  = 0.5
 leak_value = 0.2
 d_thresh   = 0.8
@@ -52,7 +56,7 @@ def generator(z,batch_size = batch_size,phase_train=True,reuse = False):
 
         g_5 = tf.nn.conv3d_transpose(g_4, weights['wg5'], output_shape=[batch_size, 64, 64, 64, 1], strides=strides, padding="SAME")
         # g_5 = tf.nn.bias_add(g_5, biases['bg5'])
-        g_5 = tf.nn.tanh(g_5)
+        g_5 = tf.nn.sigmoid(g_5)
     print(g_1, 'g1')
     print(g_2, 'g2')
     print(g_3, 'g3')
@@ -65,29 +69,35 @@ def discriminator(inputs, phase_train=True, reuse=False):
     strides = [1, 2, 2, 2, 1]
     with tf.variable_scope("dis", reuse=reuse):
         d_1 = tf.nn.conv3d(inputs, weights['wd1'], strides=strides, padding="SAME")
+        d_1 = tf.contrib.layers.layer_norm(d_1)
         # d_1 = tf.nn.bias_add(d_1, biases['bd1'])
-        d_1 = tf.contrib.layers.batch_norm(d_1, is_training=phase_train)
+        # d_1 = tf.contrib.layers.batch_norm(d_1, is_training=phase_train)
+
         d_1 = utils.lrelu(d_1,leak_value)
 
         d_2 = tf.nn.conv3d(d_1, weights['wd2'], strides=strides, padding="SAME")
+        d_2 = tf.contrib.layers.layer_norm(d_2)
         # d_2 = tf.nn.bias_add(d_2, biases['bd2'])
-        d_2 = tf.contrib.layers.batch_norm(d_2, is_training=phase_train)
+        # d_2 = tf.contrib.layers.batch_norm(d_2, is_training=phase_train)
         d_2 = utils.lrelu(d_2,leak_value)
 
         d_3 = tf.nn.conv3d(d_2, weights['wd3'], strides=strides, padding="SAME")
         # d_3 = tf.nn.bias_add(d_3, biases['bd3'])
-        d_3 = tf.contrib.layers.batch_norm(d_3, is_training=phase_train)
+        # d_3 = tf.contrib.layers.batch_norm(d_3, is_training=phase_train)
+        d_3 = tf.contrib.layers.layer_norm(d_3)
         d_3 = utils.lrelu(d_3,leak_value)
 
         d_4 = tf.nn.conv3d(d_3, weights['wd4'], strides=strides, padding="SAME")
         # d_4 = tf.nn.bias_add(d_4, biases['bd4'])
-        d_4 = tf.contrib.layers.batch_norm(d_4, is_training=phase_train)
+        # d_4 = tf.contrib.layers.batch_norm(d_4, is_training=phase_train)
+        d_4 = tf.contrib.layers.layer_norm(d_4)
         d_4 = utils.lrelu(d_4,leak_value)
 
         d_5 = tf.nn.conv3d(d_4, weights['wd5'], strides=[1, 1, 1, 1, 1], padding="VALID")
         # d_5 = tf.nn.bias_add(d_5, biases['bd5'])
+        # d_5 = tf.contrib.layers.layer_norm(d_5)
         d_5_no_sigmoid = d_5
-        d_5 = tf.nn.sigmoid(d_5)
+        # d_5 = tf.nn.sigmoid(d_5)
 
     print(d_1, 'd1')
     print(d_2, 'd2')
@@ -95,7 +105,7 @@ def discriminator(inputs, phase_train=True, reuse=False):
     print(d_4, 'd4')
     print(d_5, 'd5')
 
-    return d_5, d_5_no_sigmoid
+    return d_5_no_sigmoid
 
 
 def initialiseWeights():
@@ -142,12 +152,12 @@ def trainGAN():
 
     net_g_train = generator(z_vector, phase_train=True, reuse=False)
 
-    d_output_x, d_no_sigmoid_output_x = discriminator(x_vector, phase_train=True, reuse=False)
-    d_output_x = tf.maximum(tf.minimum(d_output_x, 0.99), 0.01)
+    d_output_x = discriminator(x_vector, phase_train=True, reuse=False)
+    # d_output_x = tf.maximum(tf.minimum(d_output_x, 0.99), 0.01)
     summary_d_x_hist = tf.summary.histogram("d_prob_x", d_output_x)
 
-    d_output_z, d_no_sigmoid_output_z = discriminator(net_g_train, phase_train=True, reuse=True)
-    d_output_z = tf.maximum(tf.minimum(d_output_z, 0.99), 0.01)
+    d_output_z = discriminator(net_g_train, phase_train=True, reuse=True)
+    # d_output_z = tf.maximum(tf.minimum(d_output_z, 0.99), 0.01)
     summary_d_z_hist = tf.summary.histogram("d_prob_z", d_output_z)
 
     # Compute the discriminator accuracy
@@ -159,13 +169,14 @@ def trainGAN():
     # # Compute the discriminator and generator loss
     # d_loss = -tf.reduce_mean(tf.log(d_output_x) + tf.log(1 - d_output_z))
     # g_loss = -tf.reduce_mean(tf.log(d_output_z))
-    d_loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=d_no_sigmoid_output_x, labels=tf.ones_like(
-        d_output_x)) + tf.nn.sigmoid_cross_entropy_with_logits(logits=d_no_sigmoid_output_z,
-                                                               labels=tf.zeros_like(d_output_z))
-    g_loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=d_no_sigmoid_output_z, labels=tf.ones_like(d_output_z))
+    # d_loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=d_no_sigmoid_output_x, labels=tf.ones_like(
+    #     d_output_x)) + tf.nn.sigmoid_cross_entropy_with_logits(logits=d_no_sigmoid_output_z,
+    #                                                            labels=tf.zeros_like(d_output_z))
+    # g_loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=d_no_sigmoid_output_z, labels=tf.ones_like(d_output_z))
+    g_loss = -tf.reduce_mean(d_output_z)
+    d_loss = -tf.reduce_mean(d_output_z) + tf.reduce_mean(d_output_x)
 
-    d_loss = tf.reduce_mean(d_loss)
-    g_loss = tf.reduce_mean(g_loss)
+
     summary_d_loss = tf.summary.scalar("d_loss", d_loss)
     summary_g_loss = tf.summary.scalar("g_loss", g_loss)
     summary_n_p_z = tf.summary.scalar("n_p_z", n_p_z)
@@ -174,11 +185,21 @@ def trainGAN():
 
     net_g_test = generator(z_vector, phase_train=False, reuse=True)
 
-    para_g = [var for var in tf.trainable_variables() if any(x in var.name for x in ['wg', 'bg', 'gen'])]
-    para_d = [var for var in tf.trainable_variables() if any(x in var.name for x in ['wd', 'bd', 'dis'])]
+    para_g = [var for var in tf.trainable_variables() if any(x in var.name for x in ['wg', 'gen'])]
+    para_d = [var for var in tf.trainable_variables() if any(x in var.name for x in ['wd', 'dis'])]
+    clip_ops = []
+    for var in para_d:
+        clip_bounds = [-.001,.001]
+        clip_ops.append(
+            tf.assign(
+                var,
+                tf.clip_by_value(var,  tf.cast(clip_bounds[0],tf.float32),tf.cast(clip_bounds[1],tf.float32))
+            )
+        )
+    clip_disc_weight = tf.group(*clip_ops)
 
     # only update the weights for the discriminator network
-    optimizer_op_d = tf.train.RMSPropOptimizer(learning_rate=d_lr).minimize(d_loss, var_list=para_d)
+    optimizer_op_d = tf.train.RMSPropOptimizer(learning_rate=d_lr).minimize(-d_loss, var_list=para_d)
     # only update the weights for the generator network
     optimizer_op_g = tf.train.RMSPropOptimizer(learning_rate=g_lr).minimize(g_loss, var_list=para_g)
 
@@ -186,48 +207,70 @@ def trainGAN():
     # vis = visdom.Visdom()
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        z_sample = np.random.normal(0, 0.33, size=[batch_size, z_size]).astype(np.float32)
+        z_sample = np.random.normal(size=[batch_size, z_size]).astype(np.float32)
         volumes = dataIO.getAll(train=True)
         volumes = volumes[..., np.newaxis].astype(np.float)
 
         for epoch in range(n_epochs):
-            idx = np.random.randint(len(volumes),size=batch_size)
-            x = volumes[idx]
-            z = np.random.normal(0, 0.33, size=[batch_size,z_size]).astype(np.float32)
 
-            #
+            # d_summary_merge = tf.summary.merge([summary_d_loss,
+            #                                     summary_d_x_hist,
+            #                                     summary_d_z_hist,
+            #                                     summary_n_p_x,
+            #                                     summary_n_p_z,
+            #                                     summary_d_acc])
+            # if epoch < 25 or epoch % 500 == 0:
+            #     n_critic = 25
+            # else:
+            #     n_critic = CRITIC_NUM
+            for i in range(n_critic):
+                z = np.random.normal(size=[batch_size, z_size]).astype(np.float32)
+                idx = np.random.randint(len(volumes), size=batch_size)
+                x = volumes[idx]
+                _ = sess.run([optimizer_op_d], feed_dict={z_vector: z,x_vector:x})
+                if clip_disc_weight is not None:
+                    _ = sess.run(clip_disc_weight)
+
+                discriminator_loss = sess.run([d_loss],
+                                                         feed_dict={z_vector: z, x_vector: x})
+
+
+                # d_output_z, d_output_x = sess.run([d_acc, n_p_x, n_p_z],
+                #                                 feed_dict={z_vector: z_sample, x_vector: next_polygon})
+                print('Discriminator Training=======================: ', "critic: ", i, ', d_loss:', discriminator_loss)
+                d_accuracy, n_x, n_z = sess.run([d_acc, n_p_x, n_p_z], feed_dict={z_vector: z, x_vector: x})
+                print('--------epoch{}---critic{}--- n_p_x:{}-------n_p_z:{}--accuracy:{}'.format(
+                    epoch, i,n_x, n_z,d_accuracy))
+            z = np.random.normal(size=[batch_size, z_size]).astype(np.float32)
+            _ = sess.run([optimizer_op_g], feed_dict={z_vector: z})
+            summary_g, generator_loss = sess.run([summary_g_loss, g_loss], feed_dict={z_vector: z})
+
+            print('================Generator Training--------------------', "epoch: ", epoch, 'g_loss:',
+                  generator_loss)
+
+            d_accuracy, n_x, n_z = sess.run([d_acc, n_p_x, n_p_z], feed_dict={z_vector: z, x_vector: x})
+            print('--------epoch{}---critic{}--- n_p_x:{}-------n_p_z:{}--accuracy:{}'.format(
+                epoch, i, n_x, n_z, d_accuracy))
+            # idx = np.random.randint(len(volumes),size=batch_size)
+            # x = volumes[idx]
 
             # for start, end in zip(
             #         range(0, len(volumes), batch_size),
             # #         range(batch_size, len(volumes), batch_size)):
             #     x = volumes[start:end].reshape(batch_size,64,64,64, 1)
 
-            d_summary_merge = tf.summary.merge([summary_d_loss,
-                                                summary_d_x_hist,
-                                                summary_d_z_hist,
-                                                summary_n_p_x,
-                                                summary_n_p_z,
-                                                summary_d_acc])
 
-            summary_d, discriminator_loss = sess.run([d_summary_merge, d_loss],
-                                                     feed_dict={z_vector: z, x_vector: x})
 
-            summary_g, generator_loss = sess.run([summary_g_loss, g_loss], feed_dict={z_vector: z})
-            # d_output_z, d_output_x = sess.run([d_acc, n_p_x, n_p_z],
-            #                                 feed_dict={z_vector: z_sample, x_vector: next_polygon})
 
-            d_accuracy, n_x, n_z = sess.run([d_acc, n_p_x, n_p_z], feed_dict={z_vector: z, x_vector: x})
-            print('-epoch{}--n_p_x:{}--n_p_z:{}--'.format(
-                 epoch,n_x, n_z))
 
-            if d_accuracy < d_thresh:
-                sess.run([optimizer_op_d], feed_dict={z_vector: z, x_vector: x})
-                print('Discriminator Training ', "epoch: ", epoch, ', d_loss:', discriminator_loss, 'g_loss:',
-                      generator_loss, "d_acc: ", d_accuracy)
-
-            sess.run([optimizer_op_g], feed_dict={z_vector: z})
-            print('Generator Training ', "epoch: ", epoch, ', d_loss:', discriminator_loss, 'g_loss:',
-                  generator_loss, "d_acc: ", d_accuracy)
+            # if d_accuracy < d_thresh:
+            #     sess.run([optimizer_op_d], feed_dict={z_vector: z, x_vector: x})
+            #     print('Discriminator Training ', "epoch: ", epoch, ', d_loss:', discriminator_loss, 'g_loss:',
+            #           generator_loss, "d_acc: ", d_accuracy)
+            #
+            # sess.run([optimizer_op_g], feed_dict={z_vector: z})
+            # print('Generator Training ', "epoch: ", epoch, ', d_loss:', discriminator_loss, 'g_loss:',
+            #       generator_loss, "d_acc: ", d_accuracy)
             # d_output_x = sess.run([d_output_x],feed_dict={x_vector:x})
             # d_output_z = sess.run([d_output_z],feed_dict={z_vector:z})
             #
@@ -235,7 +278,7 @@ def trainGAN():
 
 
             # output generated chairs
-            if epoch % 300 == 10:
+            if epoch % 100 == 10:
             # if epoch ==0:
                 g_model = sess.run(net_g_test, feed_dict={z_vector: z_sample})
                 if not os.path.exists(train_sample_directory):
@@ -246,7 +289,7 @@ def trainGAN():
                 # getMeshFromMatrix(g_model.reshape(batch_size,NUM_POLYGONS,9),train_sample_directory,epoch)
                 # g_model.dump(train_sample_directory + '/' + str(epoch))
 
-            if epoch % 300 == 10:
+            if epoch % 100 == 10:
             # if epoch==0:
                 if not os.path.exists(model_directory):
                     os.makedirs(model_directory)

@@ -18,24 +18,24 @@ out_directory = './out/'
 model_directory = './model/'
 
 weights,biases = {},{}
-def generator(z,batch_size = batch_size):
+def generator(z,batch_size = batch_size,phase_train=True,reuse = False):
     strides = [1,2,2,2,1]
-    with tf.variable_scope('gen'):
+    with tf.variable_scope('gen', reuse=reuse):
         z = tf.reshape(z,(batch_size,1,1,1,z_size))
         g_1 = tf.nn.conv3d_transpose(z,weights['wg1'],(batch_size,4,4,4,512), strides=[1,1,1,1,1],padding='VALID')
-        g_1 = tf.contrib.layers.batch_norm(g_1)
+        g_1 = tf.contrib.layers.batch_norm(g_1, is_training=phase_train)
         g_1 = tf.nn.relu(g_1)
 
         g_2 = tf.nn.conv3d_transpose(g_1,weights['wg2'], output_shape=(batch_size,8,8,8,256), strides=strides,padding='SAME')
-        g_2 = tf.contrib.layers.batch_norm(g_2)
+        g_2 = tf.contrib.layers.batch_norm(g_2, is_training=phase_train)
         g_2 = tf.nn.relu(g_2)
 
         g_3 = tf.nn.conv3d_transpose(g_2,weights['wg3'], output_shape=(batch_size,16,16,16,128), strides=strides,padding='SAME')
-        g_3 = tf.contrib.layers.batch_norm(g_3)
+        g_3 = tf.contrib.layers.batch_norm(g_3, is_training=phase_train)
         g_3 = tf.nn.relu(g_3)
 
         g_4 = tf.nn.conv3d_transpose(g_3,weights['wg4'], output_shape=(batch_size,32,32,32,64), strides=strides,padding='SAME')
-        g_4 = tf.contrib.layers.batch_norm(g_4)
+        g_4 = tf.contrib.layers.batch_norm(g_4, is_training=phase_train)
         g_4 = tf.nn.relu(g_4)
 
         g_5 = tf.nn.conv3d_transpose(g_4,weights['wg5'], output_shape=(batch_size,64,64,64,1), strides=strides,padding='SAME')
@@ -46,9 +46,9 @@ def generator(z,batch_size = batch_size):
     print(g_4, 'g4')
     print(g_5, 'g5')
     return(g_5)
-def discriminator(inputs):
+def discriminator(inputs,phase_train=True, reuse=False):
     strides = [1,2,2,2,1]
-    with tf.variable_scope('dis'):
+    with tf.variable_scope('dis', reuse=reuse):
         d_1 = tf.nn.conv3d(inputs,weights['wd1'],strides=strides,padding='SAME')
         d_1 = tf.contrib.layers.layer_norm(d_1)
         d_1 = tf.nn.leaky_relu(d_1,leak_value)
@@ -93,9 +93,9 @@ def trainGAN():
     z = tf.placeholder(shape=[batch_size,z_size],dtype=tf.float32)
     X = tf.placeholder(shape=[batch_size,cube_len,cube_len,cube_len,1], dtype=tf.float32)
 
-    G_sample = generator(z)
-    D_real = discriminator(X)
-    D_fake = discriminator(G_sample)
+    G_sample = generator(z, phase_train=True, reuse=False)
+    D_real = discriminator(X, phase_train=True, reuse=False)
+    D_fake = discriminator(G_sample, phase_train=True, reuse=True)
 
     D_loss = tf.reduce_mean(D_real) - tf.reduce_mean(D_fake)
     G_loss = -tf.reduce_mean(D_fake)

@@ -111,7 +111,7 @@ def trainGAN():
 
     # Gradient penalty
     alpha = tf.random_uniform(
-        shape = [batch_size,1],
+        shape = [batch_size,cube_len,cube_len,cube_len,1],
         minval=0.,
         maxval=1.
     )

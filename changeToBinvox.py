@@ -19,7 +19,7 @@ def read_binvox(filename):
 
 if __name__ == '__main__':
     # fileName = 'binvox-rw-py/test1.binvox'
-    data = np.load('GenerateModel/1110_model.npy')
+    data = np.load('GenerateModel/3200_model.npy')
     # with open('generateMesh/vegetation_9_2018-06-01_12-45-52_cloud.binvox', 'rb') as f:
     #     vox = binvox_rw.read_as_3d_array(f)
 
@@ -29,10 +29,10 @@ if __name__ == '__main__':
     # # print(a)
     # # print(b)
     #
-    print(data[4])
+    print(data[9])
     # print(test>0.5)
     # model_data = data1.data.reshape(64,64,64) >0.5
-    model_data = data[4].reshape(64, 64, 64) > 0.5
+    model_data = data[9].reshape(64, 64, 64) > 0.5
 
     x,y,z = np.where( model_data == True)
     print(x)
